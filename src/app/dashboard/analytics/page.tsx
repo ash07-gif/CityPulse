@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     ChartContainer,
@@ -9,7 +10,9 @@ import {
     ChartLegend,
     ChartLegendContent,
 } from "@/components/ui/chart";
-import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
+import issuesData from "@/lib/mock-data";
+import { IssueCategory } from "@/lib/types";
 
 const resolutionTrendsData = [
     { month: "Jan", resolved: 18, pending: 8 },
@@ -21,7 +24,7 @@ const resolutionTrendsData = [
     { month: "Jul", resolved: 35, pending: 10 },
 ];
 
-const chartConfig = {
+const resolutionChartConfig = {
     resolved: {
         label: "Resolved",
         color: "hsl(var(--chart-2))",
@@ -32,7 +35,29 @@ const chartConfig = {
     },
 } as const;
 
+const categoryChartConfig = {
+    Road: { label: "Road", color: "hsl(var(--chart-1))" },
+    Lighting: { label: "Lighting", color: "hsl(var(--chart-2))" },
+    Water: { label: "Water", color: "hsl(var(--chart-3))" },
+    Sanitation: { label: "Sanitation", color: "hsl(var(--chart-4))" },
+    Others: { label: "Others", color: "hsl(var(--chart-5))" },
+} as const;
+
+
 export default function AnalyticsPage() {
+    const categoryDistributionData = useMemo(() => {
+        const counts = issuesData.reduce((acc, issue) => {
+            acc[issue.category] = (acc[issue.category] || 0) + 1;
+            return acc;
+        }, {} as Record<IssueCategory, number>);
+
+        return Object.entries(counts).map(([name, value]) => ({
+            name: name as IssueCategory,
+            value,
+            fill: `var(--color-${name.toLowerCase()})`
+        }));
+    }, []);
+
     return (
         <div className="space-y-8">
             <h1 className="text-3xl font-bold font-headline">Analytics Dashboard</h1>
@@ -42,7 +67,7 @@ export default function AnalyticsPage() {
                     <CardTitle>Resolution Trends</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                    <ChartContainer config={resolutionChartConfig} className="min-h-[300px] w-full">
                         <RechartsBarChart accessibilityLayer data={resolutionTrendsData}>
                             <CartesianGrid vertical={false} />
                             <XAxis
@@ -66,9 +91,29 @@ export default function AnalyticsPage() {
                     <CardTitle>Category Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="w-full h-96 bg-muted rounded-lg flex items-center justify-center">
-                        <p className="text-muted-foreground">Chart placeholder</p>
-                    </div>
+                    <ChartContainer config={categoryChartConfig} className="min-h-[300px] w-full aspect-square">
+                        <PieChart>
+                            <ChartTooltip content={<ChartTooltipContent nameKey="value" hideLabel />} />
+                            <Pie
+                                data={categoryDistributionData}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={120}
+                                innerRadius={80}
+                                paddingAngle={5}
+                            >
+                                {categoryDistributionData.map((entry) => (
+                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2" />
+                                ))}
+                            </Pie>
+                            <ChartLegend
+                                content={<ChartLegendContent nameKey="name" />}
+                                className="-translate-y-[2rem] flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                            />
+                        </PieChart>
+                    </ChartContainer>
                 </CardContent>
             </Card>
         </div>
