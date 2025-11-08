@@ -15,11 +15,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MapPin, ThumbsUp, MessageSquare, Send } from 'lucide-react';
+import { ArrowLeft, MapPin, ThumbsUp, MessageSquare, Send, Shield } from 'lucide-react';
 import issuesData from '@/lib/mock-data';
 import { getStatusVariant } from '@/lib/utils';
 import type { Issue, Comment, IssueStatus } from '@/lib/types';
 import placeholderData from '@/lib/placeholder-images.json';
+import Link from 'next/link';
 
 export default function IssueDetailPage() {
   const router = useRouter();
@@ -28,12 +29,16 @@ export default function IssueDetailPage() {
 
   const [issue, setIssue] = useState<Issue | null>(null);
   const [newComment, setNewComment] = useState('');
+  const [role, setRole] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (id) {
       const foundIssue = issuesData.find((i) => i.id === id);
       setIssue(foundIssue || null);
     }
+    const userRole = localStorage.getItem('userRole');
+    setRole(userRole);
   }, [id]);
 
   const handleCommentSubmit = (e: React.FormEvent) => {
@@ -70,10 +75,20 @@ export default function IssueDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to feed
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to feed
+        </Button>
+        {role === 'admin' && (
+             <Link href={`/dashboard/issues/${issue.id}/manage`} passHref>
+                <Button variant="outline">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Manage Issue
+                </Button>
+             </Link>
+        )}
+      </div>
 
       <Card>
         <CardHeader>
