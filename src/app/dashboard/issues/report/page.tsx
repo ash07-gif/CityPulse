@@ -14,6 +14,7 @@ import { useState } from "react";
 export default function ReportIssuePage() {
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
     const { toast } = useToast();
+    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
     const handleLocation = () => {
         if (navigator.geolocation) {
@@ -93,7 +94,7 @@ export default function ReportIssuePage() {
                             </Button>
                         </div>
                         <div className="h-64 w-full bg-muted rounded-lg flex items-center justify-center text-muted-foreground overflow-hidden">
-                           {location ? (
+                           {googleMapsApiKey && googleMapsApiKey !== "YOUR_API_KEY_HERE" && location ? (
                                 <iframe
                                     width="100%"
                                     height="100%"
@@ -101,12 +102,16 @@ export default function ReportIssuePage() {
                                     loading="lazy"
                                     allowFullScreen
                                     referrerPolicy="no-referrer-when-downgrade"
-                                    src={`https://www.google.com/maps/embed/v1/view?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&center=${location.lat},${location.lng}&zoom=18`}
+                                    src={`https://www.google.com/maps/embed/v1/view?key=${googleMapsApiKey}&center=${location.lat},${location.lng}&zoom=18`}
                                 ></iframe>
                            ) : (
-                             <div className="flex items-center justify-center text-muted-foreground">
+                             <div className="flex flex-col items-center justify-center text-center p-4">
                                 <MapPin className="w-8 h-8 mr-2"/>
-                                Please provide your location
+                                {googleMapsApiKey === "YOUR_API_KEY_HERE" || !googleMapsApiKey ? (
+                                    <p>Please add your Google Maps API key to the <code className='font-mono bg-background p-1 rounded'>.env.local</code> file.</p>
+                                ) : (
+                                    <p>Please provide your location by clicking the button above.</p>
+                                )}
                              </div>
                            )}
                         </div>
