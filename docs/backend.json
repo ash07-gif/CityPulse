@@ -1,0 +1,290 @@
+{
+  "entities": {
+    "Resident": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Resident",
+      "type": "object",
+      "description": "Represents a resident user of the CityPulse application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Resident entity."
+        },
+        "localityId": {
+          "type": "string",
+          "description": "Reference to Locality. (Relationship: Locality 1:N Resident)"
+        },
+        "aadharNumber": {
+          "type": "string",
+          "description": "Aadhar card number of the resident."
+        },
+        "electionCardNumber": {
+          "type": "string",
+          "description": "Election card number of the resident."
+        }
+      },
+      "required": [
+        "id",
+        "localityId"
+      ]
+    },
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an admin user of the CityPulse application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Admin entity."
+        },
+        "localityId": {
+          "type": "string",
+          "description": "Reference to Locality. (Relationship: Locality 1:N Admin)"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the admin user.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "localityId",
+        "email"
+      ]
+    },
+    "Locality": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Locality",
+      "type": "object",
+      "description": "Represents a specific geographic locality (panchayat or municipality).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Locality entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the locality."
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of locality (panchayat or municipality)."
+        },
+        "state": {
+          "type": "string",
+          "description": "State the locality is in."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type"
+      ]
+    },
+    "IssueReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "IssueReport",
+      "type": "object",
+      "description": "Represents an issue reported by a resident.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the IssueReport entity."
+        },
+        "residentId": {
+          "type": "string",
+          "description": "Reference to Resident. (Relationship: Resident 1:N IssueReport)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the issue report."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the issue."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the issue (Road, Water, Lighting, Sanitation, Others)."
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the issue (Open, In Progress, Resolved)."
+        },
+        "locationLatitude": {
+          "type": "number",
+          "description": "Latitude of the issue location."
+        },
+        "locationLongitude": {
+          "type": "number",
+          "description": "Longitude of the issue location."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "Array of URLs for images associated with the issue.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "residentId",
+        "title",
+        "description",
+        "category",
+        "status",
+        "locationLatitude",
+        "locationLongitude"
+      ]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on an issue report.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Comment entity."
+        },
+        "issueReportId": {
+          "type": "string",
+          "description": "Reference to IssueReport. (Relationship: IssueReport 1:N Comment)"
+        },
+        "residentId": {
+          "type": "string",
+          "description": "Reference to Resident. (Relationship: Resident 1:N Comment)"
+        },
+        "adminId": {
+          "type": "string",
+          "description": "Reference to Admin. (Relationship: Admin 1:N Comment).  Can be null if the comment was not made by an admin."
+        },
+        "text": {
+          "type": "string",
+          "description": "The text of the comment."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the comment was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "issueReportId",
+        "text",
+        "timestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/residents/{residentId}",
+        "definition": {
+          "entityName": "Resident",
+          "schema": {
+            "$ref": "#/backend/entities/Resident"
+          },
+          "description": "Stores resident user data. The residentId is the Firebase Auth UID. Includes localityId for authorization independence.",
+          "params": [
+            {
+              "name": "residentId",
+              "description": "The Firebase Auth UID of the resident."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admins/{adminId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Stores admin user data. The adminId is the Firebase Auth UID. Includes localityId for authorization independence.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The Firebase Auth UID of the admin."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/localities/{localityId}",
+        "definition": {
+          "entityName": "Locality",
+          "schema": {
+            "$ref": "#/backend/entities/Locality"
+          },
+          "description": "Stores locality data (panchayats or municipalities).",
+          "params": [
+            {
+              "name": "localityId",
+              "description": "The unique identifier for the locality."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/issue_reports/{issueReportId}",
+        "definition": {
+          "entityName": "IssueReport",
+          "schema": {
+            "$ref": "#/backend/entities/IssueReport"
+          },
+          "description": "Stores issue reports submitted by residents. Includes denormalized localityId from the resident's profile for authorization independence.",
+          "params": [
+            {
+              "name": "issueReportId",
+              "description": "The unique identifier for the issue report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments on issue reports. Includes residentId and issueReportId to easily list all comments on a post made by a resident.",
+          "params": [
+            {
+              "name": "commentId",
+              "description": "The unique identifier for the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Collection used to assign admin roles. The existence of a document with the user's UID grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the CityPulse application, focusing on secure and scalable data management for residents, admins, localities, issue reports, and comments.  The design prioritizes Authorization Independence (CRITICAL), Clarity of Intent (Debuggability), DBAC (Database Authenticated Control), and QAPs (Rules are not Filters). It adheres to the specified design strategy mandates: Authorization Independence via Denormalization, Structural Segregation, Access Modeling, and Data Clarity and Predictability.\n\n**Authorization Independence:**\nTo ensure authorization independence, the `localityId` is included in the `/residents/{residentId}`, `/admins/{adminId}`, and `/issue_reports/{issueReportId}` documents. This denormalization eliminates the need for `get()` calls to the `/localities/{localityId}` document in security rules, enabling atomic operations and simplifying security logic.  Also the `residentId` is denormalized to the `/comments/{commentId}` collection for QAPs.\n\n**Structural Segregation:**\nData is segregated into collections based on entity type to maintain a homogeneous security posture.  Each collection contains documents with similar access control requirements.  \n\n**Access Modeling:**\nThe following access models have been applied:\n*   **Path-Based Ownership:** `/residents/{residentId}` and `/admins/{adminId}` collections use path-based ownership for private user data.\n*   **Hierarchical Paths for User-Owned Data:** `/residents/{residentId}/issue_reports/{issueReportId}` establishes a clear ownership hierarchy.\n*   **Global Roles (DBAC):**  The `/roles_admin/{uid}` collection is used to grant administrative privileges. Existence of a document in this collection grants admin rights, simplifying role management and security rules.\n\n**QAPs (Rules are not Filters):**\nThe design supports secure `list` operations by:\n*   Storing roles in the database (DBAC).  Admin privileges are determined by the existence of a document in `/roles_admin/{uid}`.\n*   Denormalizing authorization data (e.g., `localityId` in `/issue_reports/{issueReportId}`). This allows filtering and listing issue reports based on locality without complex security rules or data access patterns.\n*   Denormalizing `residentId` in the `/comments/{commentId}` collection to allow for listing comments for a specific resident and issue.\n\n**Invariants:**\nTimestamps (`timestamp` in `Comment`) can be enforced using security rules to ensure data integrity.\n\nThis structure facilitates simple, robust, and easily debuggable security rules while adhering to the core design principles."
+  }
+}

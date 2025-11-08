@@ -1,0 +1,171 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for residents and admins,
+ *              restricts data access based on roles, and ensures data consistency across
+ *              the CityPulse application.
+ *
+ * @dataStructure
+ * - /residents/{residentId}: Stores resident user data, accessible only to the user themselves.
+ * - /admins/{adminId}: Stores admin user data, accessible only to the admin themselves.
+ * - /localities/{localityId}: Stores public locality data, accessible to all.
+ * - /issue_reports/{issueReportId}: Stores issue reports, publicly readable but writable only by the report's owner.
+ * - /comments/{commentId}: Stores comments on issue reports, writable by the associated resident or an admin.
+ * - /roles_admin/{userId}: Grants admin privileges based on the existence of a document with the user's UID.
+ *
+ * @keySecurityDecisions
+ * - User listing is disallowed for both residents and admins.
+ * - Roles are managed through the /roles_admin collection.
+ * - Data consistency is enforced by matching user IDs in paths and document fields.
+ *
+ * @denormalizationForAuthorization
+ * - localityId is denormalized in /residents/{residentId}, /admins/{adminId}, and /issue_reports/{issueReportId} to enable
+ *   authorization independence and avoid costly `get()` calls.
+ * - residentId is denormalized in /comments/{commentId} to allow for listing comments by resident.
+ *
+ * @structuralSegregation
+ * - Data is segregated into collections based on entity type (residents, admins, localities, issues, comments) to maintain
+ *   a homogeneous security posture.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Secures resident user data. Only the resident can read/write their own data.
+     * @path /residents/{residentId}
+     * @allow (create) - A resident can create their own document if the UID matches the document ID.
+     *                    Example: request.auth.uid == "user123" creates /residents/user123.
+     * @allow (get) - A resident can read their own document. Example: User "user123" reads /residents/user123.
+     * @allow (update) - A resident can update their own document. Example: User "user123" updates /residents/user123.
+     * @allow (delete) - A resident can delete their own document. Example: User "user123" deletes /residents/user123.
+     * @deny (create) - A resident cannot create a document with a mismatched UID. Example: request.auth.uid == "user456" tries to create /residents/user123.
+     * @deny (get) - A resident cannot read another resident's document. Example: User "user123" tries to read /residents/user456.
+     * @deny (update) - A resident cannot update another resident's document. Example: User "user123" tries to update /residents/user456.
+     * @deny (delete) - A resident cannot delete another resident's document. Example: User "user123" tries to delete /residents/user456.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /residents/{residentId} {
+      allow get: if isOwner(residentId);
+      allow list: if false; // Listing residents is not permitted.
+      allow create: if isSignedIn() && isOwner(residentId) && request.resource.data.id == residentId;
+      allow update: if isExistingOwner(residentId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(residentId);
+    }
+
+    /**
+     * @description Secures admin user data. Only the admin can read/write their own data.
+     * @path /admins/{adminId}
+     * @allow (create) - An admin can create their own document if the UID matches the document ID.
+     *                    Example: request.auth.uid == "admin123" creates /admins/admin123.
+     * @allow (get) - An admin can read their own document. Example: User "admin123" reads /admins/admin123.
+     * @allow (update) - An admin can update their own document. Example: User "admin123" updates /admins/admin123.
+     * @allow (delete) - An admin can delete their own document. Example: User "admin123" deletes /admins/admin123.
+     * @deny (create) - An admin cannot create a document with a mismatched UID. Example: request.auth.uid == "admin456" tries to create /admins/admin123.
+     * @deny (get) - An admin cannot read another admin's document. Example: User "admin123" tries to read /admins/admin456.
+     * @deny (update) - An admin cannot update another admin's document. Example: User "admin123" tries to update /admins/admin456.
+     * @deny (delete) - An admin cannot delete another admin's document. Example: User "admin123" tries to delete /admins/admin456.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /admins/{adminId} {
+      allow get: if isOwner(adminId);
+      allow list: if false; // Listing admins is not permitted.
+      allow create: if isSignedIn() && isOwner(adminId) && request.resource.data.id == adminId;
+      allow update: if isExistingOwner(adminId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(adminId);
+    }
+
+    /**
+     * @description Allows public read access to locality data.
+     * @path /localities/{localityId}
+     * @allow (get) - Any user can read locality data. Example: Any user reads /localities/locality123.
+     * @allow (list) - Any user can list locality data. Example: Any user lists /localities.
+     * @deny (create) - No one can create locality data through the client.
+     * @deny (update) - No one can update locality data through the client.
+     * @deny (delete) - No one can delete locality data through the client.
+     * @principle Allows public read access but restricts write access.
+     */
+    match /localities/{localityId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Secures issue reports. Allows public read access, but restricts write access to the report owner.
+     * @path /issue_reports/{issueReportId}
+     * @allow (get) - Any user can read an issue report. Example: Any user reads /issue_reports/issue123.
+     * @allow (list) - Any user can list issue reports. Example: Any user lists /issue_reports.
+     * @allow (create) - A resident can create a report if their UID matches the residentId in the report.
+     *                    Example: request.auth.uid == "user123" creates a report with residentId: "user123".
+     * @allow (update) - The owner of the report can update it.
+     *                    Example: User "user123" updates /issue_reports/issue123 if the report has residentId: "user123".
+     * @allow (delete) - The owner of the report can delete it.
+     *                    Example: User "user123" deletes /issue_reports/issue123 if the report has residentId: "user123".
+     * @deny (create) - A user cannot create a report for another user.
+     *                    Example: request.auth.uid == "user456" tries to create a report with residentId: "user123".
+     * @deny (update) - A user cannot update another user's report.
+     *                    Example: User "user456" tries to update /issue_reports/issue123 if the report has residentId: "user123".
+     * @deny (delete) - A user cannot delete another user's report.
+     *                    Example: User "user456" tries to delete /issue_reports/issue123 if the report has residentId: "user123".
+     * @principle Allows public read access, but enforces ownership for write access.
+     */
+    match /issue_reports/{issueReportId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.residentId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.residentId);
+      allow delete: if isExistingOwner(resource.data.residentId);
+    }
+
+    /**
+     * @description Secures comments on issue reports. Allows creation by residents and admins.
+     * @path /comments/{commentId}
+     * @allow (get) - Any user can read a comment. Example: Any user reads /comments/comment123.
+     * @allow (list) - Any user can list comments. Example: Any user lists /comments.
+     * @allow (create) - A resident or admin can create a comment.
+     *                    Example: request.auth.uid == "user123" creates a comment with residentId: "user123".
+     *                    Example: request.auth.uid == "admin456" creates a comment with adminId: "admin456".
+     * @deny (update) - No one can update a comment.
+     * @deny (delete) - No one can delete a comment.
+     * @principle Allows creation by residents and admins, restricts updates and deletes.
+     */
+    match /comments/{commentId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && (request.resource.data.residentId == request.auth.uid || isAdmin());
+      allow update, delete: if false;
+    }
+
+    /**
+     * @description Grants admin privileges based on the existence of a document with the user's UID.
+     * @path /roles_admin/{userId}
+     * @allow (get) - Any authenticated user can check if they have admin privileges.
+     * @allow (list) - Listing is not permitted.
+     * @allow (create) - Only an existing admin can assign admin privileges.
+     * @allow (update) - Only an existing admin can modify admin privileges.
+     * @allow (delete) - Only an existing admin can revoke admin privileges.
+     * @principle Implements role-based access control for admin privileges.
+     */
+    match /roles_admin/{userId} {
+        allow get: if isSignedIn();
+        allow list: if false;
+        allow create: if isAdmin();
+        allow update: if isAdmin();
+        allow delete: if isAdmin();
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+
+    function isAdmin() {
+        return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+  }
+}
