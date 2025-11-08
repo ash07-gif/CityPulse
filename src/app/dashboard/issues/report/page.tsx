@@ -12,6 +12,8 @@ import { MapPin, Upload } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import issuesData from "@/lib/mock-data";
+import type { Issue } from "@/lib/types";
 
 export default function ReportIssuePage() {
     const [title, setTitle] = useState('');
@@ -70,14 +72,26 @@ export default function ReportIssuePage() {
             return;
         }
 
-        // In a real app, you would send this data to your backend.
-        console.log({
+        const newIssue: Issue = {
+            id: `issue-${Date.now()}`,
             title,
             description,
-            category,
-            location,
-            photo: photoPreview ? 'photo-attached' : 'no-photo',
-        });
+            category: category as any,
+            status: 'Open',
+            location: 'Ward 5', // Mock location for now
+            reporter: 'Rajesh Kumar', // Mock reporter
+            date: new Date().toISOString().split('T')[0],
+            upvotes: 0,
+            comments: [],
+            image: {
+                id: `img-${Date.now()}`,
+                url: photoPreview || 'https://picsum.photos/seed/new/600/400'
+            },
+            timeline: [{ status: 'Open', date: new Date().toISOString().split('T')[0] }],
+            locationCoords: location || { lat: 40.7128, lng: -74.0060 }
+        };
+
+        issuesData.unshift(newIssue);
 
         toast({
             title: "Issue Submitted!",
@@ -85,7 +99,7 @@ export default function ReportIssuePage() {
         });
 
         // Redirect to the community feed after submission
-        router.push('/dashboard/community');
+        router.push('/dashboard/my-reports');
     };
 
     return (
@@ -125,11 +139,11 @@ export default function ReportIssuePage() {
                                     <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="road">Road</SelectItem>
-                                    <SelectItem value="lighting">Lighting</SelectItem>
-                                    <SelectItem value="water">Water</SelectItem>
-                                    <SelectItem value="sanitation">Sanitation</SelectItem>
-                                    <SelectItem value="others">Others</SelectItem>
+                                    <SelectItem value="Road">Road</SelectItem>
+                                    <SelectItem value="Lighting">Lighting</SelectItem>
+                                    <SelectItem value="Water">Water</SelectItem>
+                                    <SelectItem value="Sanitation">Sanitation</SelectItem>
+                                    <SelectItem value="Others">Others</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
