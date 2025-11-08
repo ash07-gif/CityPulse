@@ -1,8 +1,10 @@
+
+// Your web app's Firebase configuration
 export const firebaseConfig = {
-  "projectId": "studio-1106152726-853ba",
-  "appId": "1:426167907101:web:6e7c6c5c71557ecebea7f4",
-  "apiKey": "AIzaSyCFSlZugesa1C586oeDXOJpRg1nJxx1VEY",
-  "authDomain": "studio-1106152726-853ba.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "426167907101"
+  apiKey: "AIzaSyBUTYUIzpiY0ttQMg_MK0WEzuzFi-MRttA",
+  authDomain: "citypulse-7560e.firebaseapp.com",
+  projectId: "citypulse-7560e",
+  storageBucket: "citypulse-7560e.firebasestorage.app",
+  messagingSenderId: "874047776385",
+  appId: "1:874047776385:web:8c33439f11033b97e90f80"
 };
