@@ -6,6 +6,14 @@ export type IssueTimelineEvent = {
     date: string;
 };
 
+export type Comment = {
+  id: string;
+  author: string;
+  avatar: string;
+  text: string;
+  date: string;
+};
+
 export type Issue = {
   id: string;
   title: string;
@@ -16,7 +24,7 @@ export type Issue = {
   reporter: string;
   date: string;
   upvotes: number;
-  comments: any[];
+  comments: Comment[];
   image: { id: string; url: string; };
   timeline: IssueTimelineEvent[];
   locationCoords: { lat: number; lng: number; };

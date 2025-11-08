@@ -11,7 +11,9 @@ const issues: Issue[] = [
     reporter: 'Rajesh Kumar',
     date: '2024-07-20',
     upvotes: 25,
-    comments: [],
+    comments: [
+        { id: 'c1', author: 'Priya Sharma', avatar: 'https://i.pravatar.cc/150?u=priya', text: 'This is a serious issue! I almost damaged my car here yesterday.', date: '2024-07-21' }
+    ],
     image: { id: 'pothole', url: 'https://picsum.photos/seed/pothole/600/400' },
     timeline: [{ status: 'Open', date: '2024-07-20' }],
     locationCoords: { lat: 40.7128, lng: -74.0060 }
@@ -44,7 +46,10 @@ const issues: Issue[] = [
     reporter: 'Anjali Mehta',
     date: '2024-07-15',
     upvotes: 42,
-    comments: [],
+    comments: [
+        { id: 'c2', author: 'Admin', avatar: 'https://i.pravatar.cc/150?u=admin', text: 'Our team has resolved this issue.', date: '2024-07-16' },
+        { id: 'c3', author: 'Anjali Mehta', avatar: 'https://i.pravatar.cc/150?u=anjali', text: 'Thank you for the quick response!', date: '2024-07-16' }
+    ],
     image: { id: 'pipe', url: 'https://picsum.photos/seed/pipe/600/400' },
     timeline: [
         { status: 'Open', date: '2024-07-15' },
