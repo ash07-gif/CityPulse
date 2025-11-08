@@ -11,7 +11,7 @@ export type Issue = {
   title: string;
   description: string;
   category: IssueCategory;
-  status: IssueStatus;
+  status: string;
   location: string;
   reporter: string;
   date: string;

@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { IssueStatus } from './types';
-import { BadgeProps } from "@/components/ui/badge";
+import type { BadgeProps } from "@/components/ui/badge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

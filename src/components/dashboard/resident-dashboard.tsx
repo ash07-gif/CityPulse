@@ -1,4 +1,5 @@
 "use client"
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,13 +9,39 @@ import { Map, MapPin, Plus, Search } from "lucide-react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from "@/components/ui/badge";
-import issues from '@/lib/mock-data';
+import issuesData from '@/lib/mock-data';
 import { getStatusVariant } from "@/lib/utils";
 import placeholderData from '@/lib/placeholder-images.json';
+import type { Issue, IssueStatus } from "@/lib/types";
 
 
 export function ResidentDashboard() {
-  const quickFilters = ["Road", "Lighting", "Water", "Sanitation", "Others"];
+  const quickFilters = ["All", "Road", "Lighting", "Water", "Sanitation", "Others"];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [filteredIssues, setFilteredIssues] = useState<Issue[]>(issuesData);
+
+  useEffect(() => {
+    let result = issuesData;
+
+    if (searchTerm) {
+      result = result.filter(issue =>
+        issue.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== "all") {
+      result = result.filter(issue => issue.status.toLowerCase().replace(' ', '-') === statusFilter);
+    }
+
+    if (categoryFilter !== "All") {
+      result = result.filter(issue => issue.category === categoryFilter);
+    }
+
+    setFilteredIssues(result);
+  }, [searchTerm, statusFilter, categoryFilter]);
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -47,13 +74,19 @@ export function ResidentDashboard() {
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
                 <div className="relative w-full md:flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input placeholder="Search issues..." className="pl-10" />
+                    <Input 
+                      placeholder="Search issues..." 
+                      className="pl-10" 
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                    />
                 </div>
-                <Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="open">Open</SelectItem>
                     <SelectItem value="in-progress">In Progress</SelectItem>
                     <SelectItem value="resolved">Resolved</SelectItem>
@@ -69,7 +102,14 @@ export function ResidentDashboard() {
             <div className="flex items-center gap-2 flex-wrap mb-6">
                 <span className="text-sm font-medium">Quick Filters:</span>
                 {quickFilters.map(filter => (
-                    <Button key={filter} variant="outline" size="sm">{filter}</Button>
+                    <Button 
+                      key={filter} 
+                      variant={categoryFilter === filter ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setCategoryFilter(filter)}
+                    >
+                      {filter}
+                    </Button>
                 ))}
             </div>
 
@@ -86,29 +126,37 @@ export function ResidentDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {issues.map(issue => (
-                    <TableRow key={issue.id}>
-                      <TableCell>
-                        <Image
-                            src={placeholderData.placeholderImages.find(p => p.id === issue.image.id)?.imageUrl || `https://picsum.photos/seed/${issue.id}/64/64`}
-                            alt={issue.title}
-                            width={64}
-                            height={64}
-                            className="rounded-md object-cover"
-                            data-ai-hint={placeholderData.placeholderImages.find(p => p.id === issue.image.id)?.imageHint}
-                        />
+                  {filteredIssues.length > 0 ? (
+                    filteredIssues.map(issue => (
+                      <TableRow key={issue.id}>
+                        <TableCell>
+                          <Image
+                              src={placeholderData.placeholderImages.find(p => p.id === issue.image.id)?.imageUrl || `https://picsum.photos/seed/${issue.id}/64/64`}
+                              alt={issue.title}
+                              width={64}
+                              height={64}
+                              className="rounded-md object-cover"
+                              data-ai-hint={placeholderData.placeholderImages.find(p => p.id === issue.image.id)?.imageHint}
+                          />
+                        </TableCell>
+                        <TableCell>
+                            <Link href={`/dashboard/issues/${issue.id}`} className="font-medium hover:underline">{issue.title}</Link>
+                        </TableCell>
+                        <TableCell>{issue.category}</TableCell>
+                        <TableCell>
+                            <Badge variant={getStatusVariant(issue.status as IssueStatus)}>{issue.status}</Badge>
+                        </TableCell>
+                        <TableCell className="flex items-center gap-1"><MapPin className="h-4 w-4 text-muted-foreground"/>{issue.location}</TableCell>
+                        <TableCell>{issue.date}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center h-24">
+                        No issues found.
                       </TableCell>
-                      <TableCell>
-                          <Link href={`/dashboard/issues/${issue.id}`} className="font-medium hover:underline">{issue.title}</Link>
-                      </TableCell>
-                      <TableCell>{issue.category}</TableCell>
-                      <TableCell>
-                          <Badge variant={getStatusVariant(issue.status)}>{issue.status}</Badge>
-                      </TableCell>
-                      <TableCell className="flex items-center gap-1"><MapPin className="h-4 w-4 text-muted-foreground"/>{issue.location}</TableCell>
-                      <TableCell>{issue.date}</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
