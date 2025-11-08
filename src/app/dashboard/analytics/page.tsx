@@ -100,9 +100,8 @@ export default function AnalyticsPage() {
                                 nameKey="name"
                                 cx="50%"
                                 cy="50%"
-                                outerRadius={120}
-                                innerRadius={80}
-                                paddingAngle={5}
+                                outerRadius={140}
+                                paddingAngle={2}
                             >
                                 {categoryDistributionData.map((entry) => (
                                     <Cell key={`cell-${entry.name}`} fill={entry.fill} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2" />
@@ -110,7 +109,7 @@ export default function AnalyticsPage() {
                             </Pie>
                             <ChartLegend
                                 content={<ChartLegendContent nameKey="name" />}
-                                className="-translate-y-[2rem] flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                                className="mt-4 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
                             />
                         </PieChart>
                     </ChartContainer>
