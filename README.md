@@ -1,9 +1,9 @@
-TEAM : CodeCops
-WEBSITE LINK: https://citypulse-mocha.vercel.app/
 
-# CityPulse: Civic Engagement Platform
+App link : https://citypulse-mocha.vercel.app/
 
-CityPulse is a web platform connecting residents and municipal authorities. It allows citizens to report local issues, track resolutions, and engage with their community.
+# CityPulse: Civic Engagement News Reporting Platform
+
+CityPulse is a platform connecting residents and municipal authorities. It allows citizens to report local issues, track resolutions, and engage with their community.
 
 ![CityPulse Dashboard](https://i.imgur.com/example.png) 
 *Note: Replace with an actual screenshot of your application.*
