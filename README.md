@@ -34,6 +34,4 @@ CityPulse is a platform connecting residents and municipal authorities. It allow
 
 
 
-- Nilaksh Gaonkar - [nilakshgaonkar@gmail.com](mailto:nilakshgaonkar@gmail.com)
 
-Project Link: [https://github.com/priyamredker/your-repo-name](https://github.com/priyamredker/your-repo-name)
