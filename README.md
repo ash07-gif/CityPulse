@@ -4,8 +4,7 @@
 
 CityPulse is a platform connecting residents and municipal authorities. It allows citizens to report local issues, track resolutions, and engage with their community.
 
-![CityPulse Dashboard](https://i.imgur.com/example.png) 
-*Note: Replace with an actual screenshot of your application.*
+
 
 ---
 
